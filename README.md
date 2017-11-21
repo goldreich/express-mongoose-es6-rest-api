@@ -8,7 +8,7 @@ with the JWT authorization associated with database (model User) and integrated 
 
 Clone the repo:
 ```sh
-git clone git@github.com:goldreich/express-mongoose-es6-rest-api.git
+git clone https://github.com/goldreich/express-mongoose-es6-rest-api.git
 cd express-mongoose-es6-rest-api
 ```
 
