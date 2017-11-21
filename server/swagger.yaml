@@ -1,0 +1,183 @@
+swagger: "2.0"
+info:
+  description: "Description."
+  version: "0.1.0"
+  title: "API documentation"
+  contact:
+    email: "mikhail.tsai@intspirit.com"
+host: "localhost:4040"
+basePath: "/api"
+
+tags:
+- name: "Users"
+  description: "Users description"
+- name: "Authorization"
+  description: "Authorization and registration"
+
+paths:
+
+  #
+  # Model: Users
+  #
+  /users:
+
+    #
+    # Route: POST /users
+    # User registration (Create new user).
+    #
+    post:
+      tags: ["Users"]
+      summary: "Create new user (registration)"
+      operationId: "signup"
+      produces: ["application/json"]
+      parameters:
+      - in: "body"
+        name: "body"
+        schema:
+          type: "object"
+          required: ["login", "password"]
+          properties:
+            login:
+              type: "string"
+            password:
+              type: "string"
+              minLength: 6
+      responses:
+        200:
+          description: "Registration is successful."
+
+    #
+    # Route: GET /users
+    # Get a list of users (params: limit, skip).
+    #
+    get:
+      security:
+      - jwtAuth: []
+      tags: ["Users"]
+      summary: "Get list of users"
+      operationId: "getUsers"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "limit"
+        in: "query"
+        description: "Limit of users."
+        type: "number"
+        default: 50
+        collectionFormat: "multi"
+      - name: "skip"
+        in: "query"
+        description: "Skip users. (Offset)"
+        type: "number"
+        default: 0
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/User"
+        400:
+          description: "Invalid status value"
+
+    #
+    # Route: DELETE /users
+    # Removing an authorized user.
+    #
+    delete:
+      security:
+      - jwtAuth: []
+      tags: ["Users"]
+      summary: "Remove an authorized user."
+      operationId: "removeUser"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "User removed."
+
+  #
+  # Route: GET /users/{id}
+  # Get a user by id.
+  #
+  /users/{userId}:
+    get:
+      security:
+      - jwtAuth: []
+      tags: ["Users"]
+      summary: "Find user by ID"
+      description: "Returns a single user"
+      operationId: "getUserById"
+      produces: ["application/json"]
+      parameters:
+      - name: "userId"
+        in: "path"
+        description: "ID of user to return"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/User"
+        404:
+          description: "User not found"
+
+  #
+  # Route: POST /auth/login
+  # Authorization by login and password.
+  #
+  /auth/login:
+    post:
+      tags: ["Authorization"]
+      summary: "Authorization by login/password"
+      description: "Returns: { id, login, token }, if the authentication is successful."
+      operationId: "login"
+      produces: ["application/json"]
+      parameters:
+      - in: "body"
+        name: "body"
+        schema:
+          type: "object"
+          required: ["login", "password"]
+          properties:
+            login:
+              type: "string"
+            password:
+              type: "string"
+              minLength: 6
+      responses:
+        200:
+          description: "Authentication is successful."
+        401:
+          description: "Authentication failed."
+
+securityDefinitions:
+  jwtAuth:
+    type: "apiKey"
+    in: "header"
+    name: "Authorization"
+    description: "
+      1. Use route: **/auth/signup** to registration \n
+      2. Use route: **/auth/login** to get your token \n
+      3. insert received token in **Value** by format: **Bearer received_token**
+      4. Click **Authorize** button
+    "
+
+definitions:
+  User:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      login:
+        type: "string"
+      password:
+        type: "string"
+      createdAt:
+        type: "string"
+        format: "date"
+
+externalDocs:
+  description: "Find out more about Swagger"
+  url: "http://swagger.io"

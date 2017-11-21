@@ -1,15 +1,27 @@
+import httpStatus from 'http-status';
 import User from '../models/user.model';
+import APIError from '../helpers/APIError';
 
 /**
- * Load user and append to req.
+ * Preload user by id and append to req.preloadedUser.
+ * it's convenient in building CRUD API.
  */
 function load(req, res, next, id) {
-  User.get(id)
-    .then((user) => {
-      req.user = user; // eslint-disable-line no-param-reassign
-      return next();
-    })
-    .catch(e => next(e));
+  User.findById(id)
+  .then((user) => {
+    if (user) {
+      req.preloadedUser = { // eslint-disable-line no-param-reassign
+        id: user.id,
+        login: user.login,
+        createdAt: user.createdAt
+      };
+    } else {
+      const err = new APIError('Not Found', httpStatus.NOT_FOUND, true);
+      return next(err);
+    }
+    return next();
+  })
+  .catch(e => next(e));
 }
 
 /**
@@ -17,40 +29,47 @@ function load(req, res, next, id) {
  * @returns {User}
  */
 function get(req, res) {
-  return res.json(req.user);
+  return res.json(req.preloadedUser);
 }
 
 /**
  * Create new user
- * @property {string} req.body.username - The username of user.
+ * @property {string} req.body.login - The login of user.
  * @property {string} req.body.mobileNumber - The mobileNumber of user.
  * @returns {User}
  */
 function create(req, res, next) {
+  const login = req.body.login.trim();
   const user = new User({
-    username: req.body.username,
-    mobileNumber: req.body.mobileNumber
+    login: req.body.login,
+    password: req.body.password
   });
 
-  user.save()
+  User.findOne({ login }).then((userExist) => {
+    if (userExist) {
+      return res.json({ error: 'user_exist' });
+    }
+    return user.save()
     .then(savedUser => res.json(savedUser))
     .catch(e => next(e));
+  })
+  .catch(e => next(e));
 }
 
 /**
  * Update existing user
- * @property {string} req.body.username - The username of user.
- * @property {string} req.body.mobileNumber - The mobileNumber of user.
+ * @property {string} req.body.login - The login of user.
+ * @property {string} req.body.password - The password of user.
  * @returns {User}
  */
 function update(req, res, next) {
   const user = req.user;
-  user.username = req.body.username;
-  user.mobileNumber = req.body.mobileNumber;
+  user.login = req.body.login;
+  user.password = req.body.password;
 
   user.save()
-    .then(savedUser => res.json(savedUser))
-    .catch(e => next(e));
+  .then(savedUser => res.json(savedUser))
+  .catch(e => next(e));
 }
 
 /**
@@ -61,8 +80,16 @@ function update(req, res, next) {
  */
 function list(req, res, next) {
   const { limit = 50, skip = 0 } = req.query;
+
   User.list({ limit, skip })
-    .then(users => res.json(users))
+    .then((users) => {
+      const userList = users.map(user => ({
+        id: user.id,
+        login: user.login,
+        createdAt: user.createdAt
+      }));
+      res.json(userList);
+    })
     .catch(e => next(e));
 }
 
@@ -71,8 +98,9 @@ function list(req, res, next) {
  * @returns {User}
  */
 function remove(req, res, next) {
-  const user = req.user;
-  user.remove()
+  const user = req.user; // JWT authorized user
+
+  User.findByIdAndRemove(user.id)
     .then(deletedUser => res.json(deletedUser))
     .catch(e => next(e));
 }

@@ -7,14 +7,13 @@ import APIError from '../helpers/APIError';
  * User Schema
  */
 const UserSchema = new mongoose.Schema({
-  username: {
+  login: {
     type: String,
     required: true
   },
-  mobileNumber: {
+  password: {
     type: String,
-    required: true,
-    match: [/^[1-9][0-9]{9}$/, 'The value of path {PATH} ({VALUE}) is not a valid mobile number.']
+    required: true
   },
   createdAt: {
     type: Date,
@@ -39,6 +38,7 @@ UserSchema.method({
  * Statics
  */
 UserSchema.statics = {
+
   /**
    * Get user
    * @param {ObjectId} id - The objectId of user.
@@ -46,14 +46,14 @@ UserSchema.statics = {
    */
   get(id) {
     return this.findById(id)
-      .exec()
-      .then((user) => {
-        if (user) {
-          return user;
-        }
-        const err = new APIError('No such user exists!', httpStatus.NOT_FOUND);
-        return Promise.reject(err);
-      });
+    .exec()
+    .then((user) => {
+      if (user) {
+        return user;
+      }
+      const err = new APIError('No such user exists!', httpStatus.NOT_FOUND);
+      return Promise.reject(err);
+    });
   },
 
   /**
@@ -64,11 +64,12 @@ UserSchema.statics = {
    */
   list({ skip = 0, limit = 50 } = {}) {
     return this.find()
-      .sort({ createdAt: -1 })
-      .skip(+skip)
-      .limit(+limit)
-      .exec();
+    .sort({ createdAt: -1 })
+    .skip(+skip)
+    .limit(+limit)
+    .exec();
   }
+
 };
 
 /**

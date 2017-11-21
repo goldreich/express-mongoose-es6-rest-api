@@ -2,12 +2,7 @@ import jwt from 'jsonwebtoken';
 import httpStatus from 'http-status';
 import APIError from '../helpers/APIError';
 import config from '../../config/config';
-
-// sample user, used for authentication
-const user = {
-  username: 'react',
-  password: 'express'
-};
+import User from '../models/user.model';
 
 /**
  * Returns jwt token if valid username and password is provided
@@ -17,20 +12,31 @@ const user = {
  * @returns {*}
  */
 function login(req, res, next) {
-  // Ideally you'll fetch this from the db
-  // Idea here was to show how jwt works with simplicity
-  if (req.body.username === user.username && req.body.password === user.password) {
-    const token = jwt.sign({
-      username: user.username
-    }, config.jwtSecret);
-    return res.json({
-      token,
-      username: user.username
-    });
-  }
+  User.findOne({ login: req.body.login })
+  .then((user) => {
+    if (user) {
+      if (req.body.login === user.login && req.body.password.trim() === user.password) {
+        const payload = {
+          id: user.id,
+          login: user.login
+        };
+        const options = {
+          expiresIn: '24h' // Number for seconds: 60, String for other: "2 days", "10h", "7d"
+        };
+        // https://github.com/auth0/node-jsonwebtoken#jwtsignpayload-secretorprivatekey-options-callback
+        const token = jwt.sign(payload, config.jwtSecret, options);
 
-  const err = new APIError('Authentication error', httpStatus.UNAUTHORIZED, true);
-  return next(err);
+        return res.json({
+          token,
+          id: user.id,
+          login: user.login
+        });
+      }
+    }
+    const err = new APIError('Authentication error', httpStatus.UNAUTHORIZED, true);
+    return next(err);
+  })
+  .catch(e => next(e));
 }
 
 /**

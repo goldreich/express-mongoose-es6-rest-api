@@ -59,7 +59,9 @@
     "method-override": "^2.3.5",
     "mongoose": "4.7.4",
     "morgan": "1.7.0",
-    "winston": "2.3.0"
+    "swagger-ui-express": "false2.0.11",
+    "winston": "2.3.0",
+    "yamljs": "false0.3.0"
   },
   "devDependencies": {
     "babel-cli": "6.18.0",
