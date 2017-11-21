@@ -47,7 +47,8 @@ function create(req, res, next) {
 
   User.findOne({ login }).then((userExist) => {
     if (userExist) {
-      return res.json({ error: 'user_exist' });
+      const err = new APIError('User already exist', httpStatus.CONFLICT, true);
+      return next(err);
     }
     return user.save()
     .then(savedUser => res.json(savedUser))
