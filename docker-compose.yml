@@ -34,5 +34,3 @@ services:
       - mongo
   mongo:
     image: "mongo:3.4.2"
-    ports:
-      - "27017:27017"
